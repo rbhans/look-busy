@@ -1,0 +1,16 @@
+<types>
+  <!--com.qag.lookBusy.ux-->
+  <type class="com.qag.lookBusy.ux.BLookBusyView" name="LookBusyView">
+    <agent>
+      <on type="lookBusy:LookBusy"/>
+    </agent>
+  </type>
+  <type class="com.qag.lookBusy.ux.BSnakeWidget" name="SnakeWidget"/>
+  <type class="com.qag.lookBusy.ux.BGame2048Widget" name="Game2048Widget"/>
+  <type class="com.qag.lookBusy.ux.BMinesweeperWidget" name="MinesweeperWidget"/>
+  <type class="com.qag.lookBusy.ux.BPipeFitterWidget" name="PipeFitterWidget"/>
+  <type class="com.qag.lookBusy.ux.BSequenceWidget" name="SequenceWidget"/>
+  <type class="com.qag.lookBusy.ux.BAfterHoursWidget" name="AfterHoursWidget"/>
+  <type class="com.qag.lookBusy.ux.BPanelBuildWidget" name="PanelBuildWidget"/>
+  <type class="com.qag.lookBusy.ux.BDamperDashWidget" name="DamperDashWidget"/>
+</types>

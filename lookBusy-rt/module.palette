@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bajaObjectGraph version="1.0">
+<p h="1" m="b=baja" t="b:UnrestrictedFolder">
+ <!-- Station component: per-game scoreboards; its Look Busy view is the game menu -->
+ <p n="LookBusy" h="2" m="lbusy=lookBusy" t="lbusy:LookBusy"/>
+ <!-- /PxWidgets: set lookBusyOrd to a LookBusy component to share scoreboards -->
+ <p n="PxWidgets" h="3" t="b:UnrestrictedFolder">
+  <!-- /PxWidgets/LookBusyMenu -->
+  <p n="LookBusyMenu" h="4" m="wb=workbench" t="wb:WebWidget">
+   <p n="layout" m="ui=bajaui" t="ui:Layout" v="0.0,0.0,620.0,380.0"/>
+   <p n="js" t="b:Ord" v="view:lookBusy:LookBusyView"/>
+   <p n="wbViewBinding" h="5" t="wb:WbViewBinding">
+   </p>
+  </p>
+  <!-- /PxWidgets/DuctRun -->
+  <p n="DuctRun" h="6" t="wb:WebWidget">
+   <p n="layout" t="ui:Layout" v="0.0,0.0,460.0,520.0"/>
+   <p n="js" t="b:Ord" v="view:lookBusy:SnakeWidget"/>
+   <p n="wbViewBinding" h="7" t="wb:WbViewBinding">
+   </p>
+  </p>
+  <!-- /PxWidgets/Tonnage -->
+  <p n="Tonnage" h="8" t="wb:WebWidget">
+   <p n="layout" t="ui:Layout" v="0.0,0.0,460.0,520.0"/>
+   <p n="js" t="b:Ord" v="view:lookBusy:Game2048Widget"/>
+   <p n="wbViewBinding" h="9" t="wb:WbViewBinding">
+   </p>
+  </p>
+  <!-- /PxWidgets/FaultFinder -->
+  <p n="FaultFinder" h="10" t="wb:WebWidget">
+   <p n="layout" t="ui:Layout" v="0.0,0.0,520.0,560.0"/>
+   <p n="js" t="b:Ord" v="view:lookBusy:MinesweeperWidget"/>
+   <p n="wbViewBinding" h="11" t="wb:WbViewBinding">
+   </p>
+  </p>
+  <!-- /PxWidgets/PipeFitter -->
+  <p n="PipeFitter" h="12" t="wb:WebWidget">
+   <p n="layout" t="ui:Layout" v="0.0,0.0,460.0,520.0"/>
+   <p n="js" t="b:Ord" v="view:lookBusy:PipeFitterWidget"/>
+   <p n="wbViewBinding" h="13" t="wb:WbViewBinding">
+   </p>
+  </p>
+  <!-- /PxWidgets/SequenceOfOps -->
+  <p n="SequenceOfOps" h="14" t="wb:WebWidget">
+   <p n="layout" t="ui:Layout" v="0.0,0.0,460.0,520.0"/>
+   <p n="js" t="b:Ord" v="view:lookBusy:SequenceWidget"/>
+   <p n="wbViewBinding" h="15" t="wb:WbViewBinding">
+   </p>
+  </p>
+  <!-- /PxWidgets/AfterHours -->
+  <p n="AfterHours" h="16" t="wb:WebWidget">
+   <p n="layout" t="ui:Layout" v="0.0,0.0,460.0,520.0"/>
+   <p n="js" t="b:Ord" v="view:lookBusy:AfterHoursWidget"/>
+   <p n="wbViewBinding" h="17" t="wb:WbViewBinding">
+   </p>
+  </p>
+  <!-- /PxWidgets/PanelBuild -->
+  <p n="PanelBuild" h="18" t="wb:WebWidget">
+   <p n="layout" t="ui:Layout" v="0.0,0.0,460.0,560.0"/>
+   <p n="js" t="b:Ord" v="view:lookBusy:PanelBuildWidget"/>
+   <p n="wbViewBinding" h="19" t="wb:WbViewBinding">
+   </p>
+  </p>
+  <!-- /PxWidgets/DamperDash -->
+  <p n="DamperDash" h="20" t="wb:WebWidget">
+   <p n="layout" t="ui:Layout" v="0.0,0.0,420.0,560.0"/>
+   <p n="js" t="b:Ord" v="view:lookBusy:DamperDashWidget"/>
+   <p n="wbViewBinding" h="21" t="wb:WbViewBinding">
+   </p>
+  </p>
+ </p>
+</p>
+</bajaObjectGraph>

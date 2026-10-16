@@ -1,0 +1,4 @@
+<types>
+  <!--com.qag.lookBusy-->
+  <type class="com.qag.lookBusy.BLookBusy" name="LookBusy"/>
+</types>

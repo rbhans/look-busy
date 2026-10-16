@@ -1,0 +1,222 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lookBusy harness</title>
+<!-- Browser check of the lookBusy widgets with mock Niagara objects. Not packaged; not a substitute for station testing.
+     Serve the lookBusy folder (python3 -m http.server 8767) and open /tests/harness/index.html. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #e9ecef; font-family: system-ui, sans-serif; }
+  #bar { min-height: 34px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 4px 8px; font-size: 12px; }
+  #stage { position: absolute; top: 44px; left: 0; right: 0; bottom: 0; display: flex; gap: 12px; padding: 12px; }
+  .host { flex: 1; position: relative; min-width: 0; border: 1px dashed #9aa; }
+  /* Stand-in for Niagara's theme rules on the web profile root (themeLucid ux/theme.css). */
+  .ux-root input, .ux-root select, .ux-root button, .ux-root textarea { font-family: Tahoma, sans-serif; font-size: 13px; }
+  .ux-root select { background-color: rgba(0, 0, 0, 0.05); outline: none; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+</head>
+<body>
+<div id="bar">
+  <select id="view">
+    <option value="LookBusyView">Look Busy menu</option><option value="SnakeWidget">Duct Run</option>
+    <option value="Game2048Widget">Tonnage</option><option value="MinesweeperWidget">Fault Finder</option>
+    <option value="PipeFitterWidget">Pipe Fitter</option><option value="SequenceWidget">Sequence of Ops</option>
+    <option value="AfterHoursWidget">After Hours</option><option value="PanelBuildWidget">Panel Build</option>
+    <option value="DamperDashWidget">Damper Dash</option>
+  </select>
+  <select id="bind" title="How the widget gets its LookBusy">
+    <option value="value">agent view (doLoad LookBusy)</option>
+    <option value="prop">unbound Px, lookBusyOrd set</option>
+    <option value="saved">saved Px value via constructor</option>
+    <option value="none">unbound, nothing set</option>
+    <option value="bad">lookBusyOrd → not a LookBusy</option>
+    <option value="missing">lookBusyOrd → missing</option>
+  </select>
+  <select id="theme"><option>light</option><option>dark</option><option>navy</option><option>gray</option></select>
+  <select id="count"><option value="1">1 instance</option><option value="2">2 instances</option></select>
+  <select id="collapsed"><option value="">expanded</option><option value="1">startCollapsed</option></select>
+  <button id="setord">Set lookBusyOrd now</button>
+  <button id="remote">Remote record (other user)</button>
+  <span id="log"></span>
+</div>
+<div id="stage" class="ux-root"></div>
+<script src="audit.js"></script>
+<script>
+(function () {
+  'use strict';
+  var params = new URLSearchParams(location.search);
+  function log(m) { document.getElementById('log').textContent = m; console.log('[harness] ' + m); }
+  window.harnessLog = log;
+
+  // ---------------- Mock station ----------------
+  var BOARDS = ['ductRun', 'tonnage', 'faultsBeginner', 'faultsIntermediate', 'pipeFitter', 'sequence', 'afterHours', 'panelBuild', 'damperDash'];
+  var LOWER = { faultsBeginner: 1, faultsIntermediate: 1, pipeFitter: 1, afterHours: 1 };
+  // Mirrors BLookBusy.doSubmitScore: top ten, ties keep the earlier run, user from the session.
+  function merge(text, key, value, user) {
+    var rows = String(text).split('|').map(function (p) { return /^(\d+) (.+) (\d{4}-\d{2}-\d{2})$/.exec(p.trim()); }).filter(Boolean);
+    var rank = 0;
+    while (rank < rows.length && !(LOWER[key] ? value < +rows[rank][1] : value > +rows[rank][1])) { rank++; }
+    if (rank >= 10) { return { text: text, rank: 0 }; }
+    rows.splice(rank, 0, [null, String(value), user, '2026-10-15']);
+    return { text: rows.slice(0, 10).map(function (r) { return r[1] + ' ' + r[2] + ' ' + r[3]; }).join(' | '), rank: rank + 1 };
+  }
+  function makeComponent(typeSpec) {
+    var slots = {};
+    BOARDS.forEach(function (k) { slots[k + 'Scores'] = ''; });
+    var comp = {
+      slots: slots,
+      getType: function () { return { is: function (t) { return t === typeSpec; } }; },
+      get: function (n) { return slots[n]; },
+      invoke: function (o) {
+        if (o.slot !== 'submitScore') { return Promise.reject(new Error('no action ' + o.slot)); }
+        if (window.harnessDenyWrites) { return Promise.reject(new Error('Permission denied')); }
+        if (typeof o.value !== 'string') { return Promise.reject(new Error('expected baja:String argument')); }
+        var parts = o.value.split(':');
+        if (BOARDS.indexOf(parts[0]) < 0 || !(+parts[1] > 0)) { return Promise.reject(new Error('bad argument ' + o.value)); }
+        var m = merge(slots[parts[0] + 'Scores'], parts[0], +parts[1], 'ben');
+        slots[parts[0] + 'Scores'] = m.text;
+        if (m.rank) { setTimeout(function () { fire(comp, parts[0] + 'Scores'); }, 30); }
+        return new Promise(function (r) { setTimeout(function () { r(m.rank ? String(m.rank) : ''); }, 60); });
+      }
+    };
+    return comp;
+  }
+  var busy = makeComponent('lookBusy:LookBusy');
+  var notLookBusy = makeComponent('control:NumericWritable');
+  var subscribers = [];
+  function fire(comp, name) {
+    subscribers.forEach(function (s) {
+      if (s.comps.indexOf(comp) < 0) { return; }
+      (s.h.changed || []).forEach(function (fn) { fn.call(comp, { getName: function () { return name; } }); });
+    });
+  }
+
+  window.bajaMock = {
+        getUserName: function () { return 'ben'; },
+    Ord: { make: function (ord) { return {
+      get: function (o) {
+        var target = ord === 'station:|slot:/LookBusy' ? busy : ord === 'station:|slot:/Points/Temp' ? notLookBusy : null;
+        return new Promise(function (resolve, reject) {
+          setTimeout(function () {
+            if (!target) { reject(new Error('Unresolved ord: ' + ord)); return; }
+            if (o && o.subscriber) { o.subscriber.subscribe(target); }
+            resolve(target);
+          }, 150);
+        });
+      },
+      toString: function () { return ord; } }; } }
+  };
+  window.harness = { busy: busy, subscribers: subscribers, fire: fire };
+
+  // ---------------- AMD stand-ins ----------------
+  // lex!baja: Niagara status colors (N4.15 defaults); ?lexAlarm=rrggbb simulates a station lexicon override.
+  define('lex', [], function () { return { load: function (name, req, onload) {
+    var colors = { 'Status.alarm.bg': '#' + (params.get('lexAlarm') || 'CF1624'), 'Status.alarm.fg': '#FFFFFF',
+      'Status.overridden.bg': '#BFADDD', 'Status.overridden.fg': '#333333' };
+    onload(name.split(',').map(function () { return { get: function (k) { return colors[k]; } }; }));
+  } }; });
+  define('baja', [], function () { return { load: function (n, r, onload) { onload(window.bajaMock); } }; });
+  define('bajaux/Widget', [], function () {
+    // Mirrors bajaux processParams: walk params/defaults; constructor-supplied values beat defaults.
+    function Widget(p) {
+      var props = {}; var defs = {}; var given = {};
+      var o = p;
+      while (o) {
+        if (o.defaults && o.defaults.properties) {
+          Object.keys(o.defaults.properties).forEach(function (k) { if (!(k in defs)) { defs[k] = o.defaults.properties[k]; } });
+        }
+        if (o.properties) { Object.keys(o.properties).forEach(function (k) { given[k] = o.properties[k]; }); }
+        o = o.params;
+      }
+      Object.keys(defs).forEach(function (k) { var d = defs[k]; props[k] = d && typeof d === 'object' && 'value' in d ? d.value : d; });
+      Object.keys(given).forEach(function (k) { props[k] = given[k]; });
+      var w = this;
+      this._defs = defs;
+      this.properties = function () { return {
+        getValue: function (n) { return props[n]; },
+        setValue: function (n, v) { props[n] = v; return Promise.resolve(w.doChanged ? w.doChanged(n, v) : null); },
+        names: function () { return Object.keys(defs); },
+        typeSpec: function (n) { return defs[n] && defs[n].typeSpec; }
+      }; };
+    }
+    Widget.prototype.jq = function () { return this._dom; };
+    Widget.prototype.initialize = function ($dom) { this._dom = $dom; return Promise.resolve(this.doInitialize($dom)); };
+    Widget.prototype.load = function (v) {
+      this._value = v;
+      if (this.getSubscriber && v && v.getType) { this.getSubscriber().subscribe(v); }
+      return Promise.resolve(this.doLoad(v));
+    };
+    Widget.prototype.value = function () { return this._value; };
+    Widget.prototype.destroy = function () { return Promise.resolve(this.doDestroy && this.doDestroy()); };
+    return Widget;
+  });
+  define('bajaux/mixin/subscriberMixIn', [], function () { return function (w) {
+    var sub = { h: {}, comps: [],
+      attach: function (evs, fn) { var h = this.h; evs.split(' ').forEach(function (e) { (h[e] = h[e] || []).push(fn); }); },
+      subscribe: function (c) { if (this.comps.indexOf(c) < 0) { this.comps.push(c); } return Promise.resolve(); },
+      unsubscribe: function (c) { this.comps = this.comps.filter(function (x) { return x !== c; }); return Promise.resolve(); } };
+    subscribers.push(sub);
+    w.getSubscriber = function () { return sub; };
+  }; });
+
+  require.config({ baseUrl: '/', waitSeconds: 30, urlArgs: 'bust=' + Date.now(), paths: { 'nmodule/lookBusy': '/lookBusy-ux/src' } });
+
+  var THEMES = {
+    light: {},
+    dark: { backgroundColor: '#1e222a', textColor: '#e6e9ef', accentColor: '#73a0fa' },
+    navy: { backgroundColor: '#14213d', textColor: '#f1f5f9', accentColor: '#fca311' },
+    gray: { backgroundColor: '#eef0f2', textColor: '#2b2f33', accentColor: '#3ba272' }
+  };
+
+  ['view', 'bind', 'theme', 'count', 'collapsed'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (params.get(id)) { el.value = params.get(id); }
+    el.addEventListener('change', function () { params.set(id, el.value); location.search = params.toString(); });
+  });
+
+  var view = document.getElementById('view').value;
+  var bind = document.getElementById('bind').value;
+  var theme = THEMES[document.getElementById('theme').value] || {};
+  var count = Number(document.getElementById('count').value) || 1;
+  window.widgets = [];
+
+  require(['nmodule/lookBusy/rc/' + view], function (W) {
+    var stage = document.getElementById('stage');
+    for (var i = 0; i < count; i++) {
+      var host = $('<div class="host"></div>').appendTo(stage);
+      var given = Object.assign({}, theme);
+      if (params.get('collapsed')) { given.startCollapsed = true; }
+      if (bind === 'prop' || bind === 'saved') { given.lookBusyOrd = 'station:|slot:/LookBusy'; }
+      if (bind === 'bad') { given.lookBusyOrd = 'station:|slot:/Points/Temp'; }
+      if (bind === 'missing') { given.lookBusyOrd = 'station:|slot:/Nope'; }
+      // 'saved' passes the value the way a Px WebWidget restores it: nested params.
+      var w = bind === 'saved' ? new W({ params: { properties: given } }) : new W({ properties: given });
+      window.widgets.push(w);
+      w.initialize(host);
+      if (bind === 'value') { w.load(busy); }
+    }
+    window.widget = window.widgets[0];
+    log(view + ' / ' + bind + ' — properties: ' + window.widget.properties().names().map(function (n) {
+      return n + ':' + window.widget.properties().typeSpec(n) + '=' + JSON.stringify(window.widget.properties().getValue(n));
+    }).join(', '));
+  }, function (err) { log('require failed: ' + err); console.error(err); });
+
+  document.getElementById('setord').addEventListener('click', function () {
+    window.widgets.forEach(function (w) { w.properties().setValue('lookBusyOrd', 'station:|slot:/LookBusy'); });
+    log('lookBusyOrd set to station:|slot:/LookBusy');
+  });
+  document.getElementById('remote').addEventListener('click', function () {
+    [['ductRun', 31], ['ductRun', 18], ['tonnage', 4096], ['faultsBeginner', 42], ['pipeFitter', 75], ['sequence', 9], ['afterHours', 64], ['panelBuild', 2400], ['damperDash', 12]].forEach(function (r) {
+      var m = merge(busy.slots[r[0] + 'Scores'], r[0], r[1], 'sam');
+      busy.slots[r[0] + 'Scores'] = m.text;
+      fire(busy, r[0] + 'Scores');
+    });
+    log('remote runs written by sam');
+  });
+})();
+</script>
+</body>
+</html>

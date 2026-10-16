@@ -1,0 +1,26 @@
+#
+# Lexicon for the lookBusy module.
+#
+
+LookBusy.displayName=Look Busy
+LookBusyView.displayName=Look Busy
+SnakeWidget.displayName=Duct Run
+Game2048Widget.displayName=Tonnage
+MinesweeperWidget.displayName=Fault Finder
+PipeFitterWidget.displayName=Pipe Fitter
+SequenceWidget.displayName=Sequence of Ops
+AfterHoursWidget.displayName=After Hours
+PanelBuildWidget.displayName=Panel Build
+DamperDashWidget.displayName=Damper Dash
+
+ductRunScores=Duct Run Scores
+tonnageScores=Tonnage Scores
+faultsBeginnerScores=Fault Finder Beginner Scores (s)
+faultsIntermediateScores=Fault Finder Intermediate Scores (s)
+pipeFitterScores=Pipe Fitter Scores (s)
+sequenceScores=Sequence of Ops Scores
+afterHoursScores=After Hours Scores (s)
+panelBuildScores=Panel Build Scores
+damperDashScores=Damper Dash Scores
+submitScore=Submit Score
+resetScores=Reset Scores

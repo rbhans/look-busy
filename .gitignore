@@ -1,0 +1,5 @@
+.DS_Store
+._*
+.gradle/
+build/
+node_modules/
