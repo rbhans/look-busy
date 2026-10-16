@@ -129,3 +129,7 @@ The toolbar switches view, binding mode (agent view, unbound with `lookBusyOrd`,
 - Lexicon keys: `Type.displayName` per `docDeveloper-doc.jar` `doc/workbench.html`; bare slot-name keys per `alarm-rt.lexicon`.
 - `newProperty`, `newAction(int, BValue, BFacets)`, `invoke(Action, BValue, Context)`, `Context.getUser()`, `BUser.getUsername()`, `BString.make/getString` and the flags were checked with `javap` against `baja.jar`. None of the new method names exist in the `BComponent` superclass chain.
 - The `preferredSymbol` was checked against the `META-INF/module.xml` of every installed module.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 QAGraphics. All Rights Reserved.
+ * Copyright 2026 Ben Hansen. MIT License, see LICENSE.
  */
 
 import com.tridium.gradle.plugins.bajadoc.task.Bajadoc
